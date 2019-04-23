@@ -1,4 +1,4 @@
-const _replaceStringByContext = (stringToReplace, context) => stringToReplace
+const replaceStringByContext = (stringToReplace, context) => stringToReplace
   .replace(/{{(.*?)}}/g, (_, group) => group
     .trim()
     .split(/[.[\]]/)
@@ -17,7 +17,7 @@ const parser = (params, context) => Object.keys(params).reduce((prevState, param
     ...prevState,
     [paramsKeys]: (
       typeof paramValue === 'number' ? paramValue
-        : _replaceStringByContext(paramValue, context)
+        : replaceStringByContext(paramValue, context)
     ),
   };
 }, {});
