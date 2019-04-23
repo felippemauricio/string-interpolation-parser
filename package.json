@@ -1,0 +1,28 @@
+{
+  "name": "string-parser",
+  "version": "0.0.1",
+  "description": "",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/felippemauricio/string-parser.git"
+  },
+  "keywords": [
+    "string",
+    "parser",
+    "node"
+  ],
+  "author": {
+    "name": "Felippe Maurício",
+    "email": "felippemauriciov@gmail.com",
+    "url": "https://github.com/felippemauricio"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/felippemauricio/string-parser/issues"
+  },
+  "homepage": "https://github.com/felippemauricio/string-parser#readme"
+}
