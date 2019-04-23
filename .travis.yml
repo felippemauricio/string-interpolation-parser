@@ -1,0 +1,28 @@
+language: node_js
+
+node_js:
+  - "11.9.0"
+
+cache:
+  yarn: true
+
+stages:
+  - lint
+  - test
+
+jobs:
+  include:
+
+    - stage: lint
+      script:
+        - yarn lint
+
+    - stage: test
+      script:
+        - yarn test
+      if: branch != master
+
+    - stage: test
+      script:
+        - yarn run test:coverage
+      if: branch = master
