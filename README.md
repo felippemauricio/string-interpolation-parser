@@ -1,75 +1,113 @@
-# String Interpolation {{ HelloWorld }}
-[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/felippemauricio/string-interpolation-parser/blob/master/LICENSE.md)
+# string-interpolation-parser
+
 [![npm version](https://img.shields.io/npm/v/string-interpolation-parser.svg?style=flat)](https://www.npmjs.com/package/string-interpolation-parser)
-[![Build Status](https://travis-ci.org/felippemauricio/string-interpolation-parser.svg?branch=master)](https://travis-ci.org/felippemauricio/string-interpolation-parser)
-[![devDependencies Status](https://david-dm.org/felippemauricio/string-interpolation-parser/dev-status.svg)](https://david-dm.org/felippemauricio/string-interpolation-parser?type=dev)
-[![Coverage Status](https://coveralls.io/repos/github/felippemauricio/string-interpolation-parser/badge.svg?branch=master)](https://coveralls.io/github/felippemauricio/string-interpolation-parser?branch=master)
-[![Code Style](https://badgen.net/badge/code%20style/airbnb/fd5c63)](https://github.com/airbnb/javascript)
+[![CI](https://github.com/felippemauricio/string-interpolation-parser/actions/workflows/ci.yml/badge.svg)](https://github.com/felippemauricio/string-interpolation-parser/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/felippemauricio/string-interpolation-parser/branch/master/graph/badge.svg)](https://codecov.io/gh/felippemauricio/string-interpolation-parser)
+[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/felippemauricio/string-interpolation-parser/blob/master/LICENSE.md)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/felippemauricio/string-interpolation-parser/pulls)
 
-This package assists with dynamic string interpolation and on the fly value transformation.
+A tiny, typed, **isomorphic** parser for `{{ token }}` string interpolation. Give
+it a map of parameters and a context object, and it returns the map with every
+placeholder filled in from the context — resolving dotted and indexed paths along
+the way.
+
+- 🪶 **Tiny & zero-dependency** — one function, bundled types, dual ESM + CJS.
+- 🌐 **Isomorphic** — pure JavaScript, runs the same in the browser and Node (>= 12).
+- 🎯 **Dotted & indexed paths** — `{{ user.posts[0].title }}` just works.
+- ✅ **Predictable** — only string and number values survive; missing lookups
+  become an empty string, never an error.
+
+**[Docs & live playground →](https://felippemauricio.github.io/string-interpolation-parser/)**
 
 ## Installation
 
-Using yarn:
-```js
-yarn add string-interpolation-parser
-```
-
-Using npm:
-
-```js
-npm i --save string-interpolation-parser
+```sh
+npm install string-interpolation-parser
 ```
 
 ## Usage
 
-```js
+```ts
 import parser from 'string-interpolation-parser';
 
 const params = {
-  param1: 'Welcome, {{ vendor.name }}',
-  param2: 'Welcome the {{ store.data.name }}, Sr. {{ customer }}',
-  param3: 10,
-  param4: true,
-  param5: null,
-  param6: undefined,
-  param7: 'Hello World',
-  param8: '{{var1}}, {{var2}}',
+  welcome: 'Welcome, {{ vendor.name }}',
+  order: 'Hi {{ customer }}, shipping to {{ store.data.name }}',
+  headline: 'Read now: {{ user.posts[0].title }}',
+  total: 10,
+  ignored: true, // dropped — not a string or number
 };
 
 const context = {
-  vendor: {
-    name: 'Felippe Maurício',
-  },
-  store: {
-    data: {
-      address: 'RJ',
-      name: 'Rio de Janeiro',
-    },
-  },
+  vendor: { name: 'Felippe Maurício' },
+  store: { data: { name: 'Rio de Janeiro' } },
   customer: 'Luciana Cabral',
-  var1: 'Hello',
-  var2: 'World',
+  user: { posts: [{ title: 'Designing an API with GraphQL' }] },
 };
 
-const result = parser(params, context);
-
-console.log('result = ', result)
-// result = {
-//   param1: 'Welcome, Felippe Maurício',
-//   param2: ''Welcome the Rio de Janeiro, Sr. Luciana Cabral',
-//   param3: 10,
-//   param7: 'Hello World',
-//   param8: 'Hello, World',
+parser(params, context);
+// {
+//   welcome: 'Welcome, Felippe Maurício',
+//   order: 'Hi Luciana Cabral, shipping to Rio de Janeiro',
+//   headline: 'Read now: Designing an API with GraphQL',
+//   total: 10,
 // }
+```
+
+`require` also works and returns the function directly:
+
+```js
+const parser = require('string-interpolation-parser');
+```
+
+## Behaviour
+
+- **Only `string` and `number` values are kept** — anything else is dropped.
+- **Numbers pass through untouched**; only strings are interpolated.
+- **Tokens are `{{ path }}`**; whitespace inside the braces is ignored.
+- **Paths support dot and bracket notation** (`a.b[0].c`).
+- **Missing or falsy lookups resolve to an empty string** — no errors thrown.
+
+## Features
+
+All additive and opt-in — the defaults above are unchanged.
+
+```ts
+// Fallbacks — used when the token would render empty (quote to keep spaces)
+parser({ hi: 'Hi {{ user.name || Guest }}' }, {});
+// { hi: 'Hi Guest' }
+
+// Filters (pipes) — chainable, resolved from options.transforms
+parser(
+  { p: '$ {{ amount | round: 2 }}' },
+  { amount: 9.5 },
+  {
+    transforms: { round: (v, d) => Number(v).toFixed(Number(d)) },
+  },
+);
+// { p: '$ 9.50' }
+
+// Escaping — emit literal braces
+parser({ d: 'Use \\{{ token }} to interpolate' }, {});
+// { d: 'Use {{ token }} to interpolate' }
+
+// passthrough — keep non-string/number values
+parser({ flag: true, hi: '{{ name }}' }, { name: 'Felippe' }, { passthrough: true });
+// { flag: true, hi: 'Felippe' }
+
+// raw — a single whole-string token keeps its real type
+parser({ user: '{{ account.user }}' }, { account: { user: { id: 1 } } }, { raw: true });
+// { user: { id: 1 } }
 ```
 
 ## API
 
-```js
-  parser(params : Object, context : Object) => Object
+```ts
+parser(params: Params, context: Context, options?: Options): Record<string, unknown>
 ```
+
+See the [API reference](https://felippemauricio.github.io/string-interpolation-parser/reference/api)
+for the full type definitions.
 
 ## License
 
